@@ -11,6 +11,10 @@ import json
 from datetime import datetime as dt
 import time
 
+
+st.markdown('<body bgcolor="black" ></body>',unsafe_allow_html=True)
+
+
 st1=st.empty()
 st_input=st.empty()
 df=pd.read_csv('test.csv')
