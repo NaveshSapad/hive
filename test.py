@@ -13,7 +13,7 @@ import time
 
 st1=st.empty()
 st_input=st.empty()
-df=pd.read_csv(r'C:\Users\Abhishek Ravindra\Anaconda3\Hive Posting\Old\test.csv')
+df=pd.read_csv('test.csv')
 df=df.drop('Unnamed: 0',axis=1)
 name=st_input.text_input('Enter your Hive username')
 
