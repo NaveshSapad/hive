@@ -103,6 +103,7 @@ if __name__ == '__main__':
     
 
     hive_user=st_hive_username.text_input('Enter your Hive username','amr008')
+    hive_user=hive_user.lower()
     token=st_select_token.selectbox('Select the token you wish to see dividends for',['BRO','INDEX'])
     
     if token:
