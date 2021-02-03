@@ -61,9 +61,9 @@ def get_chart(df_user_details,token,sym_list,sym):
 
             st.write('<div class="card"><div class="card-header"><center>Total '+sym+' from Jan 1 to Feb 1 : '+str(sum_sym)+' '+sym+'</center>',unsafe_allow_html=True)
             
-            
-            c = alt.Chart(df_sym).mark_area(point=True).encode(x='date', y='quantity',color='symbol',tooltip=['quantity']).properties(width=750,height=500) 
-            st.write(c)
+            if sum_sym>0:
+                c = alt.Chart(df_sym).mark_area(point=True).encode(x='date', y='quantity',color='symbol',tooltip=['quantity']).properties(width=750,height=500) 
+                st.write(c)
             
         
         else: # Selected ALL
@@ -77,10 +77,9 @@ def get_chart(df_user_details,token,sym_list,sym):
                     st.table(df_sym.tail(10))
 
                 st.write('<div class="card"><div class="card-header"><center>Total '+sym+' from Jan 1 to Feb 1 : '+str(sum_sym)+' '+sym+'</center></div>',unsafe_allow_html=True)
-                c = alt.Chart(df_sym).mark_area(point=True).encode(x='date', y='quantity',color='symbol',tooltip=['quantity']).properties(width=750,height=500)                
-            
-
-                st.write(c)
+                if sum_sym>0:
+                    c = alt.Chart(df_sym).mark_area(point=True).encode(x='date', y='quantity',color='symbol',tooltip=['quantity']).properties(width=750,height=500)                
+                    st.write(c)
 
 
 
@@ -116,15 +115,21 @@ if __name__ == '__main__':
         df_user_details,n=load_user_details(df,hive_user)
 
 
-    sym= st_select_symbol.selectbox('Select SYMBOL',all_list)
+    sym = st_select_symbol.selectbox('Select SYMBOL',all_list)
 
     if sym:
         if n==1:
             st.title('@'+hive_user+' payouts - '+token)
+            st.markdown('''
+            <h5>Get your {} token here - <a href='https://hive-engine.com/?p=market&t={}'>H-E Market</a></h5>
+            '''.format(token,token),unsafe_allow_html=True)
 
             get_chart(df_user_details,token,sym_list,sym)
         else:
             st.title('@'+hive_user+' has no payouts from '+token+' to display')
+            st.markdown('''
+            <h5>Buy your first {} token here - <a href='https://hive-engine.com/?p=market&t={}'>H-E Market</a></h5>
+            '''.format(token,token),unsafe_allow_html=True)
         
         
     
