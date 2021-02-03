@@ -12,10 +12,15 @@ from datetime import datetime as dt
 import time
 import altair as alt
 from PIL import Image
+import matplotlib.pyplot as plt
 
 def load_csv(token):
     if(token=='BRO'): # Use else when you add more tokens.
-        df=pd.read_csv('bro_payouts.csv') 
+        df=pd.read_csv('bro_payouts.csv')
+    elif(token=='INDEX'):
+        df=pd.read_csv('index_payouts.csv')
+
+    
     
     sym_list=list(set(df['symbol'])) # Take unique symbols 
     all_list=['All']
@@ -27,11 +32,12 @@ def load_csv(token):
 def load_image(token):
     if(token=='BRO'):
         image = Image.open('bro.png') # Get Bro image
-    else:
-        image = Image.open('bro.png') # Change this after you add more tokens. For now use BRO .
+    elif(token=='INDEX'):
+        image = Image.open('index.png') # Get INDEX image
     return image
 
 def load_user_details(df,hive_user):
+
     df_user_details=df[df['to']==hive_user] # This loads only specific user details 
     df_user_details['quantity']=pd.to_numeric(df_user_details['quantity']) # Converting to float.
 
@@ -42,7 +48,7 @@ def load_user_details(df,hive_user):
 
 def get_chart(df_user_details,token,sym_list,sym):
 
-    if(token=='BRO'):
+    if(token):
         if sym!='All':  # Then a particular symbol is selected in the selectbox .
             st.markdown('<hr>',unsafe_allow_html=True)
 
@@ -54,8 +60,11 @@ def get_chart(df_user_details,token,sym_list,sym):
                 st.table(df_sym.tail(10))
 
             st.write('<div class="card"><div class="card-header"><center>Total '+sym+' from Jan 1 to Feb 1 : '+str(sum_sym)+' '+sym+'</center>',unsafe_allow_html=True)
-            c = alt.Chart(df_sym).mark_line(point=True).encode(x='date', y='quantity',color='symbol',tooltip=['quantity']).interactive()
+            
+            
+            c = alt.Chart(df_sym).mark_area(point=True).encode(x='date', y='quantity',color='symbol',tooltip=['quantity']).properties(width=750,height=500) 
             st.write(c)
+            
         
         else: # Selected ALL
         
@@ -68,12 +77,10 @@ def get_chart(df_user_details,token,sym_list,sym):
                     st.table(df_sym.tail(10))
 
                 st.write('<div class="card"><div class="card-header"><center>Total '+sym+' from Jan 1 to Feb 1 : '+str(sum_sym)+' '+sym+'</center></div>',unsafe_allow_html=True)
-                c = alt.Chart(df_sym).mark_line(point=True).encode(x='date', y='quantity',color='symbol',tooltip=['quantity']).interactive()
-                st.write(c)
-                
+                c = alt.Chart(df_sym).mark_area(point=True).encode(x='date', y='quantity',color='symbol',tooltip=['quantity']).properties(width=750,height=500)                
             
 
-        
+                st.write(c)
 
 
 
@@ -97,7 +104,7 @@ if __name__ == '__main__':
     
 
     hive_user=st_hive_username.text_input('Enter your Hive username','amr008')
-    token=st_select_token.selectbox('Select the token you wish to see dividends for',['BRO'])
+    token=st_select_token.selectbox('Select the token you wish to see dividends for',['BRO','INDEX'])
     
     if token:
         df,all_list,sym_list = load_csv(token)
