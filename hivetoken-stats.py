@@ -59,7 +59,7 @@ def get_chart(df_user_details,token,sym_list,sym):
             if st.checkbox('Show table: Last 10 days '+sym+' payout'):
                 st.table(df_sym.tail(10))
 
-            st.write('<div class="card"><div class="card-header"><center>Total '+sym+' from Jan 1 to Feb 1 : '+str(sum_sym)+' '+sym+'</center>',unsafe_allow_html=True)
+            st.write('<div class="card"><div class="card-header"><center>Total '+sym+' from Jan 1 to Feb 3 : '+str(sum_sym)+' '+sym+'</center>',unsafe_allow_html=True)
             
             if sum_sym>0:
                 c = alt.Chart(df_sym).mark_line(point=True).encode(x='date', y='quantity',color='symbol',tooltip=['quantity']).properties(width=750,height=500) 
@@ -76,7 +76,7 @@ def get_chart(df_user_details,token,sym_list,sym):
                 if st.checkbox('Show table: Last 10 days '+sym+' payout'):
                     st.table(df_sym.tail(10))
 
-                st.write('<div class="card"><div class="card-header"><center>Total '+sym+' from Jan 1 to Feb 1 : '+str(sum_sym)+' '+sym+'</center></div>',unsafe_allow_html=True)
+                st.write('<div class="card"><div class="card-header"><center>Total '+sym+' from Jan 1 to Feb 3 : '+str(sum_sym)+' '+sym+'</center></div>',unsafe_allow_html=True)
                 if sum_sym>0:
                     c = alt.Chart(df_sym).mark_line(point=True).encode(x='date', y='quantity',color='symbol',tooltip=['quantity']).properties(width=750,height=500)                
                     st.write(c)
