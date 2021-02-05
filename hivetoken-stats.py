@@ -13,12 +13,17 @@ import time
 import altair as alt
 from PIL import Image
 import matplotlib.pyplot as plt
+from hiveengine.wallet import Wallet
 
+
+@st.cache
 def load_csv(token):
     if(token=='BRO'): # Use else when you add more tokens.
         df=pd.read_csv('bro_payouts.csv')
     elif(token=='INDEX'):
         df=pd.read_csv('index_payouts.csv')
+    elif(token=='DHEDGE'):
+        df=pd.read_csv('dhedge_payouts.csv')
 
     
     
@@ -33,7 +38,9 @@ def load_image(token):
     if(token=='BRO'):
         image = Image.open('bro.png') # Get Bro image
     elif(token=='INDEX'):
-        image = Image.open('index.png') # Get INDEX image
+        image = Image.open('index.png')# Get INDEX image
+    elif(token=='DHEDGE'):
+        image = Image.open('dhedge.png') # Get DHEDGE image
     return image
 
 def load_user_details(df,hive_user):
@@ -45,6 +52,15 @@ def load_user_details(df,hive_user):
         return df_user_details,0
     else:
         return df_user_details,1
+
+def get_balance(hive_user,token):
+    wallet=Wallet(hive_user)
+
+    list_balances=wallet.get_balances()
+    for i in range(0,len(list_balances)):
+        if(list_balances[i]['symbol']==token):
+            return(list_balances[i]['balance'])
+    return(0)
 
 def get_chart(df_user_details,token,sym_list,sym):
 
@@ -68,8 +84,9 @@ def get_chart(df_user_details,token,sym_list,sym):
         
         else: # Selected ALL
         
-            st.markdown('<hr>',unsafe_allow_html=True)
             for sym in sym_list:
+                st.markdown('<hr>',unsafe_allow_html=True)
+                st.header(sym)
                 df_sym=df_user_details[df_user_details['symbol']==sym]
                 sum_sym=df_sym['quantity'].sum()
 
@@ -104,7 +121,7 @@ if __name__ == '__main__':
 
     hive_user=st_hive_username.text_input('Enter your Hive username','amr008')
     hive_user=hive_user.lower()
-    token=st_select_token.selectbox('Select the token you wish to see dividends for',['BRO','INDEX'])
+    token=st_select_token.selectbox('Select the token you wish to see dividends for',['BRO','INDEX','DHEDGE'])
     
     if token:
         df,all_list,sym_list = load_csv(token)
@@ -118,14 +135,18 @@ if __name__ == '__main__':
 
     sym = st_select_symbol.selectbox('Select SYMBOL',all_list)
 
+    balance=get_balance(hive_user,token)
+
     if sym:
-        if n==1:
-            st.title('@'+hive_user+' payouts - '+token)
+        if n==1:       
+            st.title('@'+hive_user+' payouts: '+token)
+            st.subheader('Your current balance: '+str(balance)+' '+token)
             st.markdown('''
-            <h5>Get your {} token here - <a href='https://hive-engine.com/?p=market&t={}'>H-E Market</a></h5>
+            <h5>Buy more {} token here - <a href='https://hive-engine.com/?p=market&t={}'>H-E Market</a></h5>
             '''.format(token,token),unsafe_allow_html=True)
 
             get_chart(df_user_details,token,sym_list,sym)
+            
         else:
             st.title('@'+hive_user+' has no payouts from '+token+' to display')
             st.markdown('''
