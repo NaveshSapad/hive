@@ -14,6 +14,7 @@ import altair as alt
 from PIL import Image
 import matplotlib.pyplot as plt
 from hiveengine.wallet import Wallet
+from hiveengine.market import Market
 
 
 @st.cache
@@ -34,6 +35,7 @@ def load_csv(token):
 
     return df,all_list,sym_list
 
+@st.cache
 def load_image(token):
     if(token=='BRO'):
         image = Image.open('bro.png') # Get Bro image
@@ -48,10 +50,12 @@ def load_user_details(df,hive_user):
     df_user_details=df[df['to']==hive_user] # This loads only specific user details 
     df_user_details['quantity']=pd.to_numeric(df_user_details['quantity']) # Converting to float.
 
+    date_count=len(set(df_user_details['date']))
+
     if df_user_details.empty:
-        return df_user_details,0
+        return df_user_details,0,date_count
     else:
-        return df_user_details,1
+        return df_user_details,1,date_count
 
 def get_balance(hive_user,token):
     wallet=Wallet(hive_user)
@@ -63,6 +67,9 @@ def get_balance(hive_user,token):
     return(0)
 
 def get_chart(df_user_details,token,sym_list,sym):
+    total_hive=0
+    my_bar.progress(20)
+    
 
     if(token):
         if sym!='All':  # Then a particular symbol is selected in the selectbox .
@@ -75,16 +82,35 @@ def get_chart(df_user_details,token,sym_list,sym):
             if st.checkbox('Show table: Last 10 days '+sym+' payout'):
                 st.table(df_sym.tail(10))
 
-            st.write('<div class="card"><div class="card-header"><center>Total '+sym+' from Jan 1 to Feb 3 : '+str(sum_sym)+' '+sym+'</center>',unsafe_allow_html=True)
+            market=Market() # Market instance
+            list_metrics=market.get_metrics() # Returns all the tokens in HE with details
+            for i in list_metrics:
+                if(i['symbol']==sym): # Selecting only the symbol we want
+                    total=(float(i['lastPrice'])* sum_sym) # Taking last price and multiplying with total token earned which is = sum_sym
+
+            if sym=='HIVE':
+                total=sum_sym
+
+            total_hive=total
+                                
+            st.write('<div class="card"><div class="card-header"><center>Total '+sym+' from Jan 1 to Feb 4 : '+ '%.6f' % sum_sym+' '+sym+' , In HIVE = '+'%.6f' % total +'.</center>',unsafe_allow_html=True)
             
             if sum_sym>0:
                 c = alt.Chart(df_sym).mark_line(point=True).encode(x='date', y='quantity',color='symbol',tooltip=['quantity']).properties(width=750,height=500) 
                 st.write(c)
-            
+
+            my_bar.progress(50)
+
+            return total_hive
+
+        
         
         else: # Selected ALL
-        
+            n=0
             for sym in sym_list:
+                n=n+1
+                my_bar.progress((n/len(sym_list)))
+                
                 st.markdown('<hr>',unsafe_allow_html=True)
                 st.header(sym)
                 df_sym=df_user_details[df_user_details['symbol']==sym]
@@ -93,10 +119,37 @@ def get_chart(df_user_details,token,sym_list,sym):
                 if st.checkbox('Show table: Last 10 days '+sym+' payout'):
                     st.table(df_sym.tail(10))
 
-                st.write('<div class="card"><div class="card-header"><center>Total '+sym+' from Jan 1 to Feb 3 : '+str(sum_sym)+' '+sym+'</center></div>',unsafe_allow_html=True)
+
+                market=Market() # Market instance
+                list_metrics=market.get_metrics() # Returns all the tokens in HE with details
+                for i in list_metrics:
+                    if(i['symbol']==sym): # Selecting only the symbol we want
+                        total=(float(i['lastPrice'])* sum_sym) # Taking last price and multiplying with total token earned which is = sum_sym
+
+                total_hive=total_hive+total
+                
+                if sym=='HIVE':
+                    total=sum_sym
+            
+                st.write('<div class="card"><div class="card-header"><center>Total '+sym+' from Jan 1 to Feb 4 : '+'%.6f' % sum_sym+' '+sym+' , In HIVE = '+'%.6f' %total+'.</center>',unsafe_allow_html=True)
+            
                 if sum_sym>0:
                     c = alt.Chart(df_sym).mark_line(point=True).encode(x='date', y='quantity',color='symbol',tooltip=['quantity']).properties(width=750,height=500)                
                     st.write(c)
+
+            
+            return total_hive
+
+
+def get_token_price(token):
+    market=Market() # Market instance
+    list_metrics=market.get_metrics() # Returns all the tokens in HE with details
+    for i in list_metrics:
+        if(i['symbol']==token): # Selecting only the symbol we want
+            return(float(i['lastPrice']))
+
+    return(0)
+    
 
 
 
@@ -130,7 +183,7 @@ if __name__ == '__main__':
         st_image.image(image,use_column_width=True)
 
     if hive_user:
-        df_user_details,n=load_user_details(df,hive_user)
+        df_user_details,n,date_count=load_user_details(df,hive_user)
 
 
     sym = st_select_symbol.selectbox('Select SYMBOL',all_list)
@@ -145,7 +198,31 @@ if __name__ == '__main__':
             <h5>Buy more {} token here - <a href='https://hive-engine.com/?p=market&t={}'>H-E Market</a></h5>
             '''.format(token,token),unsafe_allow_html=True)
 
-            get_chart(df_user_details,token,sym_list,sym)
+            st_total_hive=st.empty()
+
+            st_display_progress=st.empty()
+
+            my_bar = st_total_hive.progress(0)
+
+            my_bar.progress(10)
+            st_display_progress.write("Please wait while the all the payouts details loads completely to calculate final HIVE")
+            
+
+            total_hive=get_chart(df_user_details,token,sym_list,sym)
+
+            my_bar.progress(100)
+            st_display_progress.empty()
+            
+
+            per_day_average= total_hive/date_count
+
+            current_token_price= get_token_price(token)
+            
+            #APR = ((per_day_average * 365) / (float(balance) * current_token_price )*100)
+
+
+            st_total_hive.markdown('<hr><hr><h3><center>Total Hive from {} token from Jan 1 to Feb 4 is: {} HIVE<br> <hr> Per day average(Hive) from {} token= {} HIVE.  </center></h3>'.format(sym,'%.5f' % total_hive,sym,'%.4f' %per_day_average),unsafe_allow_html=True)
+            
             
         else:
             st.title('@'+hive_user+' has no payouts from '+token+' to display')
