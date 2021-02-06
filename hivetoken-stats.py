@@ -69,7 +69,7 @@ def get_balance(hive_user,token):
 def get_chart(df_user_details,token,sym_list,sym):
     total_hive=0
     my_bar.progress(20)
-    
+    total=0
 
     if(token):
         if sym!='All':  # Then a particular symbol is selected in the selectbox .
