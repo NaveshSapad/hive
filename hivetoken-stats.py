@@ -168,11 +168,7 @@ if __name__ == '__main__':
     st_select_token=st.sidebar.empty() # Token selection - Empty
     st_select_symbol=st.sidebar.empty() # Symbol - Empty
     st_image=st.sidebar.empty() # Image - Empty
-    st_ad=st.sidebar.empty()
-
-    st_ad.markdown('''
-    <iframe data-aa="1566340" src="//ad.a-ads.com/1566340?size=300x250" scrolling="no" style="width:300px; height:250px; border:0px; padding:0; overflow:hidden" allowtransparency="true"></iframe>
-    ''',unsafe_allow_html=True)
+    
     # All the above in sidebar .
     
 
