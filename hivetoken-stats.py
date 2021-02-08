@@ -188,6 +188,11 @@ if __name__ == '__main__':
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     ''',unsafe_allow_html=True)
 
+    st.markdown('''
+    <iframe data-aa="1567652" src="//ad.a-ads.com/1567652?size=728x90" scrolling="no" style="width:728px; height:90px; border:0px; padding:0; overflow:hidden" allowtransparency="true"></iframe>
+    
+    ''',unsafe_allow_html=True)
+
     
 
     st_hive_username=st.sidebar.empty() # Username - Empty
