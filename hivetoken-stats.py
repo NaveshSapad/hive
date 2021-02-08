@@ -15,10 +15,12 @@ from PIL import Image
 import matplotlib.pyplot as plt
 from hiveengine.wallet import Wallet
 from hiveengine.market import Market
+from datetime import datetime, timedelta
+    
 
 
-@st.cache
 def load_csv(token):
+    st_progress.progress(12)
     if(token=='BRO'): # Use else when you add more tokens.
         df=pd.read_csv('bro_payouts.csv')
     elif(token=='INDEX'):
@@ -26,16 +28,17 @@ def load_csv(token):
     elif(token=='DHEDGE'):
         df=pd.read_csv('dhedge_payouts.csv')
 
-    
-    
+    st_progress.progress(20)
     sym_list=list(set(df['symbol'])) # Take unique symbols 
     all_list=['All']
     for i in sym_list:
         all_list.append(i) # For Token selection in sidebar
 
+    st_progress.progress(30)
+    st_proc.write("Got all the data")
     return df,all_list,sym_list
 
-@st.cache
+
 def load_image(token):
     if(token=='BRO'):
         image = Image.open('bro.png') # Get Bro image
@@ -46,16 +49,39 @@ def load_image(token):
     return image
 
 def load_user_details(df,hive_user):
+    st_progress.progress(55)
+    st_proc.write("Filtering your data")
+
+    sum_hive_yesterday=0 # To calculate yesterday's hive payout
 
     df_user_details=df[df['to']==hive_user] # This loads only specific user details 
     df_user_details['quantity']=pd.to_numeric(df_user_details['quantity']) # Converting to float.
 
     date_count=len(set(df_user_details['date']))
 
+    
+    if not df_user_details.empty:
+        st_proc.write("Fetching payouts for {} account".format(hive_user))
+        df_last_date=df_user_details[df_user_details['date']==max(df_user_details['date'])]
+        
+        df_last_date.reset_index(inplace=True)
+        st_progress.progress(65)
+            
+        for i in range(0,len(df_last_date)):
+            sum_hive_yesterday += get_token_price(df_last_date['symbol'][i])*df_last_date['quantity'][i]
+
+        #if st.checkbox("Click here to see most recent date payout "):
+         #   st.table(df_last_date)
+    st_progress.progress(85)
+    
+            
+
+
+
     if df_user_details.empty:
-        return df_user_details,0,date_count
+        return df_user_details,0,date_count,sum_hive_yesterday
     else:
-        return df_user_details,1,date_count
+        return df_user_details,1,date_count,sum_hive_yesterday
 
 def get_balance(hive_user,token):
     wallet=Wallet(hive_user)
@@ -70,6 +96,7 @@ def get_chart(df_user_details,token,sym_list,sym):
     total_hive=0
     my_bar.progress(20)
     total=0
+    
 
     if(token):
         if sym!='All':  # Then a particular symbol is selected in the selectbox .
@@ -93,7 +120,7 @@ def get_chart(df_user_details,token,sym_list,sym):
 
             total_hive=total
                                 
-            st.write('<div class="card"><div class="card-header"><center>Total '+sym+' from Jan 1 to Feb 4 : '+ '%.6f' % sum_sym+' '+sym+' , In HIVE = '+'%.6f' % total +'.</center>',unsafe_allow_html=True)
+            st.write('<div class="card"><div class="card-header"><center>Total '+sym+' from Jan 1 to Feb 7 : '+ '%.6f' % sum_sym+' '+sym+' , In HIVE = '+'%.6f' % total +'.</center>',unsafe_allow_html=True)
             
             if sum_sym>0:
                 c = alt.Chart(df_sym).mark_line(point=True).encode(x='date', y='quantity',color='symbol',tooltip=['quantity']).properties(width=750,height=500) 
@@ -131,7 +158,7 @@ def get_chart(df_user_details,token,sym_list,sym):
                 if sym=='HIVE':
                     total=sum_sym
             
-                st.write('<div class="card"><div class="card-header"><center>Total '+sym+' from Jan 1 to Feb 4 : '+'%.6f' % sum_sym+' '+sym+' , In HIVE = '+'%.6f' %total+'.</center>',unsafe_allow_html=True)
+                st.write('<div class="card"><div class="card-header"><center>Total '+sym+' from Jan 1 to Feb 7 : '+'%.6f' % sum_sym+' '+sym+' , In HIVE = '+'%.6f' %total+'.</center>',unsafe_allow_html=True)
             
                 if sum_sym>0:
                     c = alt.Chart(df_sym).mark_line(point=True).encode(x='date', y='quantity',color='symbol',tooltip=['quantity']).properties(width=750,height=500)                
@@ -150,9 +177,6 @@ def get_token_price(token):
 
     return(0)
     
-
-
-
     
 
 if __name__ == '__main__':
@@ -164,26 +188,33 @@ if __name__ == '__main__':
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     ''',unsafe_allow_html=True)
 
+    
+
     st_hive_username=st.sidebar.empty() # Username - Empty
     st_select_token=st.sidebar.empty() # Token selection - Empty
     st_select_symbol=st.sidebar.empty() # Symbol - Empty
     st_image=st.sidebar.empty() # Image - Empty
-    
-    # All the above in sidebar .
-    
+    st_proc=st.sidebar.empty() 
+    st_progress=st.sidebar.empty()
+ 
 
     hive_user=st_hive_username.text_input('Enter your Hive username','amr008')
     hive_user=hive_user.lower()
     token=st_select_token.selectbox('Select the token you wish to see dividends for',['BRO','INDEX','DHEDGE'])
     
     if token:
+        start=dt.now()
+        st_progress.progress(10)
         df,all_list,sym_list = load_csv(token)
+
         
         image=load_image(token)
         st_image.image(image,use_column_width=True)
 
     if hive_user:
-        df_user_details,n,date_count=load_user_details(df,hive_user)
+        df_user_details,n,date_count,sum_hive=load_user_details(df,hive_user)
+        st_proc.write("Data Loaded")
+        st_progress.progress(100)
 
 
     sym = st_select_symbol.selectbox('Select SYMBOL',all_list)
@@ -211,45 +242,21 @@ if __name__ == '__main__':
             total_hive=get_chart(df_user_details,token,sym_list,sym)
 
             my_bar.progress(100)
+
             st_display_progress.empty()
             
-
             per_day_average= total_hive/date_count
 
             current_token_price= get_token_price(token)
             
-            #APR = ((per_day_average * 365) / (float(balance) * current_token_price )*100)
-
-
-            st_total_hive.markdown('<hr><hr><h3><center>Total Hive from {} token from Jan 1 to Feb 4 is: {} HIVE<br> <hr> Per day average(Hive) from {} token= {} HIVE.  </center></h3>'.format(sym,'%.5f' % total_hive,sym,'%.4f' %per_day_average),unsafe_allow_html=True)
+            APR = (((sum_hive) * 365) / (float(balance) * current_token_price )*100)
             
+            st_total_hive.markdown('<hr><hr><h3>Total Hive from {} token from Jan 1 to Feb 7 is: {} HIVE<br> <hr> Per day average(Hive) for the above period from {} token= {} HIVE.<br><hr>Yesterdays payout ( in Hive ) ={} Hive <br><hr> APR (based on most recent payout + Recent price of {}):{} % </h3>'.format(sym,'%.5f' % total_hive,sym,'%.4f' %per_day_average,"%.5f"%sum_hive,token,"%.2f"%APR),unsafe_allow_html=True)
+
+            st_write(dt.now()-start)
             
         else:
             st.title('@'+hive_user+' has no payouts from '+token+' to display')
             st.markdown('''
             <h5>Buy your first {} token here - <a href='https://hive-engine.com/?p=market&t={}'>H-E Market</a></h5>
             '''.format(token,token),unsafe_allow_html=True)
-        
-        
-    
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
