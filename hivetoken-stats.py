@@ -116,6 +116,7 @@ def get_chart(df_user_details,token,sym_list,sym):
             df_sym=df_user_details[df_user_details['symbol']==sym] # Retreive that particular symbol details . 
             sum_sym=df_sym['quantity'].sum() # Add it .
 
+
             if st.checkbox('Show table: Last 10 days '+sym+' payout'):
                 st.table(df_sym.head(10))
 
@@ -154,7 +155,7 @@ def get_chart(df_user_details,token,sym_list,sym):
                 sum_sym=df_sym['quantity'].sum()
 
                 if st.checkbox('Show table: Last 10 days '+sym+' payout'):
-                    st.table(df_sym.tail(10))
+                    st.table(df_sym.head(10))
 
 
                 market=Market() # Market instance
