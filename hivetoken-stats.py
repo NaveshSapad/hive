@@ -117,7 +117,7 @@ def get_chart(df_user_details,token,sym_list,sym):
             sum_sym=df_sym['quantity'].sum() # Add it .
 
             if st.checkbox('Show table: Last 10 days '+sym+' payout'):
-                st.table(df_sym.tail(10))
+                st.table(df_sym.head(10))
 
             market=Market() # Market instance
             list_metrics=market.get_metrics() # Returns all the tokens in HE with details
